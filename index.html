@@ -7709,6 +7709,7 @@ a.anchor-link {
 
 <span class="n">init_notebook_mode</span><span class="p">(</span><span class="n">connected</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+<span class="c1"># pio.renderers.default = 'svg'</span>
 <span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s1">'iframe_connected'</span>
 </pre></div>
 </div>
@@ -8958,19 +8959,26 @@ Name: JobSatisfaction, dtype: float64
 <div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">grouped_df</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"Gender"</span><span class="p">,</span> <span class="s2">"JobSatisfaction"</span><span class="p">])[</span><span class="s2">"JobSatisfaction"</span><span class="p">]</span>
-    <span class="o">.</span><span class="n">count</span><span class="p">()</span>
-    <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Count"</span><span class="p">)</span>
-<span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">job_satisfaction_pct</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">'Gender'</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">'JobSatisfaction'</span><span class="p">],</span> <span class="n">normalize</span><span class="o">=</span><span class="s1">'index'</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
 
-<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
-    <span class="n">grouped_df</span><span class="p">,</span>
-    <span class="n">x</span><span class="o">=</span><span class="s2">"JobSatisfaction"</span><span class="p">,</span>
-    <span class="n">y</span><span class="o">=</span><span class="s2">"Count"</span><span class="p">,</span>
-    <span class="n">color</span><span class="o">=</span><span class="s2">"Gender"</span><span class="p">,</span>
-    <span class="n">barmode</span><span class="o">=</span><span class="s2">"group"</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">"Job Satisfaction by Gender"</span><span class="p">,</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">job_satisfaction_pct</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">'Level </span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">job_satisfaction_pct</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">job_satisfaction_pct</span><span class="p">[</span><span class="n">level</span><span class="p">],</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">job_satisfaction_pct</span><span class="p">[</span><span class="n">level</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'%'</span><span class="p">,</span>
+        <span class="n">textposition</span><span class="o">=</span><span class="s1">'inside'</span>
+    <span class="p">))</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">barmode</span><span class="o">=</span><span class="s1">'stack'</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s1">'Job Satisfaction Distribution by Gender (%)'</span><span class="p">,</span>
+    <span class="n">xaxis_title</span><span class="o">=</span><span class="s2">"Gender"</span><span class="p">,</span>
+    <span class="n">yaxis_title</span><span class="o">=</span><span class="s2">"Percentage (%)"</span><span class="p">,</span>
+    <span class="n">showlegend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">legend_title</span><span class="o">=</span><span class="s2">"Job Satisfaction Level"</span>
 <span class="p">)</span>
 
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -9326,48 +9334,63 @@ Name: count, dtype: int64</pre>
     <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="s2">"School"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"College"</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">"Bachelor"</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="s2">"Master"</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="s2">"PhD"</span><span class="p">}</span>
 <span class="p">)</span>
 
-<span class="n">education_counts</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"EducationLevel"</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
-<span class="n">education_counts</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"EducationLevel"</span><span class="p">,</span> <span class="s2">"Count"</span><span class="p">]</span>
+<span class="n">education_percentages</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"EducationLevel"</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">education_percentages</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"EducationLevel"</span><span class="p">,</span> <span class="s2">"Count"</span><span class="p">]</span>
 
-<span class="n">attrition_counts</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"EducationLevel"</span><span class="p">,</span> <span class="s2">"Attrition"</span><span class="p">])</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Count"</span><span class="p">)</span>
-<span class="p">)</span>
+<span class="n">attrition_percentages</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"EducationLevel"</span><span class="p">,</span> <span class="s2">"Attrition"</span><span class="p">])</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Count"</span><span class="p">)</span>
+<span class="n">attrition_percentages</span><span class="p">[</span><span class="s2">"Percentage"</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrition_percentages</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"EducationLevel"</span><span class="p">)[</span><span class="s2">"Count"</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
 
-<span class="c1"># Creating subplots</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span>
     <span class="n">rows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
     <span class="n">cols</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">subplot_titles</span><span class="o">=</span><span class="p">(</span>
-        <span class="s2">"Education Level Distribution - Treemap"</span><span class="p">,</span>
-        <span class="s2">"Attrition Count by Education Level - Bar Chart"</span><span class="p">,</span>
+        <span class="s2">"Education Level Distribution - Percentage"</span><span class="p">,</span>
+        <span class="s2">"Attrition Percentage by Education Level"</span>
     <span class="p">),</span>
-    <span class="n">specs</span><span class="o">=</span><span class="p">[[{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"treemap"</span><span class="p">}],</span> <span class="p">[{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"xy"</span><span class="p">}]],</span>
+    <span class="n">specs</span><span class="o">=</span><span class="p">[[{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"pie"</span><span class="p">}],</span> <span class="p">[{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"xy"</span><span class="p">}]],</span>
+    <span class="n">vertical_spacing</span><span class="o">=</span><span class="mf">0.2</span>
 <span class="p">)</span>
 
-<span class="c1"># Treemap</span>
-<span class="n">fig_treemap</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">treemap</span><span class="p">(</span>
-    <span class="n">education_counts</span><span class="p">,</span>
-    <span class="n">path</span><span class="o">=</span><span class="p">[</span><span class="s2">"EducationLevel"</span><span class="p">],</span>
-    <span class="n">values</span><span class="o">=</span><span class="s2">"Count"</span><span class="p">,</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+    <span class="n">go</span><span class="o">.</span><span class="n">Pie</span><span class="p">(</span>
+        <span class="n">labels</span><span class="o">=</span><span class="n">education_percentages</span><span class="p">[</span><span class="s2">"EducationLevel"</span><span class="p">],</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">education_percentages</span><span class="p">[</span><span class="s2">"Count"</span><span class="p">],</span>
+        <span class="n">textinfo</span><span class="o">=</span><span class="s2">"label+percent"</span><span class="p">,</span>
+        <span class="n">hoverinfo</span><span class="o">=</span><span class="s2">"label+percent"</span><span class="p">,</span>
+        <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{label}</span><span class="s2">: %</span><span class="si">{percent}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">insidetextorientation</span><span class="o">=</span><span class="s2">"radial"</span>
+    <span class="p">),</span>
+    <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span>
 <span class="p">)</span>
-<span class="n">fig_treemap</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span><span class="n">textinfo</span><span class="o">=</span><span class="s2">"label+value"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">fig_treemap</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+    <span class="n">textposition</span><span class="o">=</span><span class="s2">"inside"</span>
+<span class="p">)</span>
 
-<span class="c1"># Bar Chart</span>
-<span class="n">fig_bar</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
-    <span class="n">attrition_counts</span><span class="p">,</span>
+<span class="n">fig_bar_percent</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+    <span class="n">attrition_percentages</span><span class="p">,</span>
     <span class="n">x</span><span class="o">=</span><span class="s2">"EducationLevel"</span><span class="p">,</span>
-    <span class="n">y</span><span class="o">=</span><span class="s2">"Count"</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s2">"Percentage"</span><span class="p">,</span>
     <span class="n">color</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
     <span class="n">barmode</span><span class="o">=</span><span class="s2">"group"</span><span class="p">,</span>
-    <span class="n">text</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
+    <span class="n">text</span><span class="o">=</span><span class="n">attrition_percentages</span><span class="p">[</span><span class="s2">"Percentage"</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="p">)</span>
-<span class="n">fig_bar</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span><span class="n">textposition</span><span class="o">=</span><span class="s2">"outside"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">fig_bar</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fig_bar_percent</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+    <span class="n">textposition</span><span class="o">=</span><span class="s2">"outside"</span><span class="p">,</span>
+    <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{text}</span><span class="s2">%"</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">fig_bar_percent</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  
 
-<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">title_text</span><span class="o">=</span><span class="s2">"Education Level and Attrition Analysis"</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">height</span><span class="o">=</span><span class="mi">900</span><span class="p">,</span> 
+    <span class="n">width</span><span class="o">=</span><span class="mi">900</span><span class="p">,</span>
+    <span class="n">title_text</span><span class="o">=</span><span class="s2">"Education Level Analysis"</span><span class="p">,</span>
+    <span class="n">showlegend</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">"Education Level"</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">"Percentage (%)"</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -9382,7 +9405,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="1020" scrolling="no" src="iframe_figures/figure_22.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="920" scrolling="no" src="iframe_figures/figure_22.html" width="920px"></iframe>
 </div>
 </div>
 </div>
@@ -9470,6 +9493,12 @@ The level of education plays a significant role in employee attrition. Typically
     <span class="n">color</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="n">average_income_by_department_attrition</span><span class="p">[</span><span class="s2">"AttritionPercentage"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">average_income_by_department_attrition</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Department"</span><span class="p">)[</span>
+        <span class="s2">"MeanIncome"</span>
+    <span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+<span class="p">)</span>
+
 <span class="n">fig2</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
     <span class="n">average_income_by_department_attrition</span><span class="p">,</span>
     <span class="n">x</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span>
@@ -9477,9 +9506,12 @@ The level of education plays a significant role in employee attrition. Typically
     <span class="n">color</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
     <span class="n">barmode</span><span class="o">=</span><span class="s2">"group"</span><span class="p">,</span>
     <span class="n">title</span><span class="o">=</span><span class="s2">"Average Monthly Income by Department and Attrition Status"</span><span class="p">,</span>
-    <span class="n">text</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
+    <span class="n">text</span><span class="o">=</span><span class="s2">"AttritionPercentage"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">fig_bar</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span><span class="n">textposition</span><span class="o">=</span><span class="s2">"outside"</span><span class="p">)</span>
+<span class="n">fig2</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+    <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{text:.2f}</span><span class="s2">%"</span><span class="p">,</span>
+    <span class="n">textposition</span><span class="o">=</span><span class="s2">"outside"</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">fig1</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
     <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -9507,6 +9539,136 @@ The level of education plays a significant role in employee attrition. Typically
 </div>
 </div>
 </div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">plotly.express</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">px</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plotly.subplots</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_subplots</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
+
+<span class="c1"># Determine the average monthly income by department</span>
+<span class="n">average_income_by_department</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Department"</span><span class="p">)[</span><span class="s2">"MonthlyIncome"</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"MeanIncome"</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Calculate percentage of total income for each department</span>
+<span class="n">total_income</span> <span class="o">=</span> <span class="n">average_income_by_department</span><span class="p">[</span><span class="s2">"MeanIncome"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">average_income_by_department</span><span class="p">[</span><span class="s2">"Percentage"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">average_income_by_department</span><span class="p">[</span><span class="s2">"MeanIncome"</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_income</span>
+<span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+
+<span class="c1"># Determine the average monthly income by department and attrition status</span>
+<span class="n">average_income_by_department_attrition</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"Department"</span><span class="p">,</span> <span class="s2">"Attrition"</span><span class="p">])[</span><span class="s2">"MonthlyIncome"</span><span class="p">]</span>
+    <span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"MeanIncome"</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Calculate the percentage distribution of salary within each department by attrition status</span>
+<span class="n">dept_totals</span> <span class="o">=</span> <span class="n">average_income_by_department_attrition</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Department"</span><span class="p">)[</span><span class="s2">"MeanIncome"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">dept_totals</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Department"</span><span class="p">,</span> <span class="s2">"TotalDeptIncome"</span><span class="p">]</span>
+
+<span class="c1"># Merge the department totals back</span>
+<span class="n">average_income_by_department_attrition</span> <span class="o">=</span> <span class="n">average_income_by_department_attrition</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+    <span class="n">dept_totals</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span>
+<span class="p">)</span>
+
+<span class="c1"># Calculate the percentage of each attrition group within its department</span>
+<span class="n">average_income_by_department_attrition</span><span class="p">[</span><span class="s2">"AttritionIncomePercentage"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">average_income_by_department_attrition</span><span class="p">[</span><span class="s2">"MeanIncome"</span><span class="p">]</span> <span class="o">/</span> 
+    <span class="n">average_income_by_department_attrition</span><span class="p">[</span><span class="s2">"TotalDeptIncome"</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+
+<span class="c1"># Create subplots</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span>
+    <span class="n">rows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">cols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">subplot_titles</span><span class="o">=</span><span class="p">(</span>
+        <span class="s2">"Average Monthly Income by Department"</span><span class="p">,</span>
+        <span class="s2">"Department Income Distribution (%)"</span><span class="p">,</span>
+        <span class="s2">"Average Monthly Income by Department and Attrition"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">specs</span><span class="o">=</span><span class="p">[[{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"xy"</span><span class="p">},</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"pie"</span><span class="p">}],</span> <span class="p">[{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"xy"</span><span class="p">,</span> <span class="s2">"colspan"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span> <span class="kc">None</span><span class="p">]],</span>
+<span class="p">)</span>
+
+<span class="c1"># Top Left: Bar chart of average income by department</span>
+<span class="n">fig1</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+    <span class="n">average_income_by_department</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s2">"MeanIncome"</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span>
+    <span class="n">text</span><span class="o">=</span><span class="n">average_income_by_department</span><span class="p">[</span><span class="s2">"MeanIncome"</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">fig1</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span><span class="n">textposition</span><span class="o">=</span><span class="s2">"outside"</span><span class="p">,</span> <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{text:,.0f}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># Top Right: Pie chart of income distribution by department</span>
+<span class="n">fig_pie</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">pie</span><span class="p">(</span>
+    <span class="n">average_income_by_department</span><span class="p">,</span>
+    <span class="n">names</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span>
+    <span class="n">values</span><span class="o">=</span><span class="s2">"MeanIncome"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Department Income Distribution"</span><span class="p">,</span>
+    <span class="n">hover_data</span><span class="o">=</span><span class="p">[</span><span class="s2">"Percentage"</span><span class="p">],</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s2">"MeanIncome"</span><span class="p">:</span> <span class="s2">"Average Income"</span><span class="p">},</span>
+<span class="p">)</span>
+<span class="n">fig_pie</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+    <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{label}</span><span class="s2">: %</span><span class="si">{percent}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">textposition</span><span class="o">=</span><span class="s2">"inside"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Bottom Left: Bar chart of income by department and attrition</span>
+<span class="n">fig2</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+    <span class="n">average_income_by_department_attrition</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s2">"MeanIncome"</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
+    <span class="n">barmode</span><span class="o">=</span><span class="s2">"group"</span><span class="p">,</span>
+    <span class="n">text</span><span class="o">=</span><span class="n">average_income_by_department_attrition</span><span class="p">[</span><span class="s2">"MeanIncome"</span><span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">fig2</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span><span class="n">textposition</span><span class="o">=</span><span class="s2">"outside"</span><span class="p">,</span> <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{text:,.0f}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># Add all traces to the subplots</span>
+<span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">fig1</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">fig_pie</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">fig2</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Update layout</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1200</span><span class="p">,</span> <span class="n">title_text</span><span class="o">=</span><span class="s2">"Monthly Income Analysis"</span><span class="p">)</span>
+
+<span class="c1"># Update axes titles</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">"Average Monthly Income ($)"</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">"Average Monthly Income ($)"</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">"Department"</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
+<iframe allowfullscreen="" frameborder="0" height="1020" scrolling="no" src="iframe_figures/figure_24.html" width="1220px"></iframe>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
@@ -9523,7 +9685,7 @@ The level of education plays a significant role in employee attrition. Typically
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">box</span><span class="p">(</span>
@@ -9532,54 +9694,6 @@ The level of education plays a significant role in employee attrition. Typically
     <span class="n">y</span><span class="o">=</span><span class="s2">"MonthlyIncome"</span><span class="p">,</span>
     <span class="n">color</span><span class="o">=</span><span class="s2">"JobSatisfaction"</span><span class="p">,</span>
     <span class="n">title</span><span class="o">=</span><span class="s2">"Distribution of Monthly Income by Job Satisfaction and Attrition"</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_24.html" width="100%"></iframe>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Income-and-its-Impact-on-Attrition">Income and its Impact on Attrition<a class="anchor-link" href="#Income-and-its-Impact-on-Attrition">¶</a></h3><p><a id="income-and-the-levels-of-attrition"></a></p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Group by Attrition and calculate average MonthlyIncome</span>
-<span class="n">df_grouped</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Attrition"</span><span class="p">,</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s2">"MonthlyIncome"</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-
-<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
-    <span class="n">df_grouped</span><span class="p">,</span>
-    <span class="n">x</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
-    <span class="n">y</span><span class="o">=</span><span class="s2">"MonthlyIncome"</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">"Income and its Impact on Attrition"</span><span class="p">,</span>
-    <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s2">"MonthlyIncome"</span><span class="p">:</span> <span class="s2">"Average Monthly Income"</span><span class="p">},</span>
-    <span class="n">color</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -9606,7 +9720,7 @@ The level of education plays a significant role in employee attrition. Typically
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="Level-of-Attrition-by-Overtime-Status">Level of Attrition by Overtime Status<a class="anchor-link" href="#Level-of-Attrition-by-Overtime-Status">¶</a></h3><p><a id="level-of-attrition-by-overtime"></a></p>
+<h3 id="Income-and-its-Impact-on-Attrition">Income and its Impact on Attrition<a class="anchor-link" href="#Income-and-its-Impact-on-Attrition">¶</a></h3><p><a id="income-and-the-levels-of-attrition"></a></p>
 </div>
 </div>
 </div>
@@ -9618,18 +9732,23 @@ The level of education plays a significant role in employee attrition. Typically
 <div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Count of employees by OverTime and Attrition</span>
-<span class="n">df_grouped</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"OverTime"</span><span class="p">,</span> <span class="s2">"Attrition"</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Group by Attrition and calculate average MonthlyIncome</span>
+<span class="n">df_grouped</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Attrition"</span><span class="p">,</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s2">"MonthlyIncome"</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">df_grouped</span><span class="p">[</span><span class="s1">'MonthlyIncomePercentage'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df_grouped</span><span class="p">[</span><span class="s1">'MonthlyIncome'</span><span class="p">]</span> <span class="o">/</span> <span class="n">df_grouped</span><span class="p">[</span><span class="s1">'MonthlyIncome'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
 
 <span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
     <span class="n">df_grouped</span><span class="p">,</span>
-    <span class="n">x</span><span class="o">=</span><span class="s2">"OverTime"</span><span class="p">,</span>
-    <span class="n">y</span><span class="o">=</span><span class="s2">"size"</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s2">"MonthlyIncome"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Income and its Impact on Attrition"</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s2">"MonthlyIncome"</span><span class="p">:</span> <span class="s2">"Average Monthly Income"</span><span class="p">},</span>
     <span class="n">color</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">"Attrition Count by Overtime Status"</span><span class="p">,</span>
-    <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s2">"size"</span><span class="p">:</span> <span class="s2">"Number of Employees"</span><span class="p">,</span> <span class="s2">"OverTime"</span><span class="p">:</span> <span class="s2">"Overtime Status"</span><span class="p">},</span>
-    <span class="n">barmode</span><span class="o">=</span><span class="s2">"group"</span><span class="p">,</span>
-    <span class="n">text_auto</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">text</span><span class="o">=</span><span class="s2">"MonthlyIncomePercentage"</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+    <span class="n">textposition</span><span class="o">=</span><span class="s2">"inside"</span><span class="p">,</span>
+    <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{text:.2f}</span><span class="s2">%"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -9646,6 +9765,63 @@ The level of education plays a significant role in employee attrition. Typically
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
 <iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_26.html" width="100%"></iframe>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="Level-of-Attrition-by-Overtime-Status">Level of Attrition by Overtime Status<a class="anchor-link" href="#Level-of-Attrition-by-Overtime-Status">¶</a></h3><p><a id="level-of-attrition-by-overtime"></a></p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Count of employees by OverTime and Attrition</span>
+<span class="n">df_grouped</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"OverTime"</span><span class="p">,</span> <span class="s2">"Attrition"</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+<span class="n">df_grouped</span><span class="p">[</span><span class="s1">'EmployeePercentage'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df_grouped</span><span class="p">[</span><span class="s1">'size'</span><span class="p">]</span> <span class="o">/</span> <span class="n">df_grouped</span><span class="p">[</span><span class="s1">'size'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+    <span class="n">df_grouped</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="s2">"OverTime"</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s2">"size"</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Attrition Count by Overtime Status"</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s2">"size"</span><span class="p">:</span> <span class="s2">"Number of Employees"</span><span class="p">,</span> <span class="s2">"OverTime"</span><span class="p">:</span> <span class="s2">"Overtime Status"</span><span class="p">},</span>
+    <span class="n">barmode</span><span class="o">=</span><span class="s2">"group"</span><span class="p">,</span>
+    <span class="n">text</span><span class="o">=</span><span class="s2">"EmployeePercentage"</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+    <span class="n">textposition</span><span class="o">=</span><span class="s2">"inside"</span><span class="p">,</span>
+    <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{text:.2f}</span><span class="s2">%"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_27.html" width="100%"></iframe>
 </div>
 </div>
 </div>
@@ -9686,7 +9862,7 @@ The level of education plays a significant role in employee attrition. Typically
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [27]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [28]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">WorkLifeBalance</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
@@ -9700,7 +9876,7 @@ The level of education plays a significant role in employee attrition. Typically
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[27]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[28]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>WorkLifeBalance
 3    893
@@ -9717,7 +9893,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [28]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [29]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s2">"WorkLifeBalanceLevel"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">WorkLifeBalance</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
@@ -9734,7 +9910,7 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[28]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[29]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>WorkLifeBalanceLevel
 Better    893
@@ -9751,7 +9927,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [29]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [30]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Group by WorkLifeBalance and Attrition</span>
@@ -9759,6 +9935,10 @@ Name: count, dtype: int64</pre>
     <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"WorkLifeBalanceLevel"</span><span class="p">,</span> <span class="s2">"WorkLifeBalance"</span><span class="p">,</span> <span class="s2">"Attrition"</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="o">.</span><span class="n">size</span><span class="p">()</span>
     <span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">"WorkLifeBalance"</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">df_grouped</span><span class="p">[</span><span class="s2">"sizePercentage"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df_grouped</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"WorkLifeBalanceLevel"</span><span class="p">)[</span><span class="s2">"size"</span><span class="p">]</span>
+    <span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
 <span class="p">)</span>
 
 <span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
@@ -9772,7 +9952,12 @@ Name: count, dtype: int64</pre>
         <span class="s2">"WorkLifeBalanceLevel"</span><span class="p">:</span> <span class="s2">"Work-Life Balance Rating"</span><span class="p">,</span>
     <span class="p">},</span>
     <span class="n">barmode</span><span class="o">=</span><span class="s2">"group"</span><span class="p">,</span>
-    <span class="n">text</span><span class="o">=</span><span class="n">df_grouped</span><span class="p">[</span><span class="s2">"size"</span><span class="p">],</span>
+    <span class="n">text</span><span class="o">=</span><span class="s2">"sizePercentage"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+    <span class="n">textposition</span><span class="o">=</span><span class="s2">"outside"</span><span class="p">,</span>
+    <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{text:.2f}</span><span class="s2">%"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -9788,7 +9973,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_29.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_30.html" width="100%"></iframe>
 </div>
 </div>
 </div>
@@ -9834,7 +10019,7 @@ One of the factors include:</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [30]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [31]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Group by DistanceFromHome and Attrition, and count employees</span>
@@ -9862,7 +10047,7 @@ One of the factors include:</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_30.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_31.html" width="100%"></iframe>
 </div>
 </div>
 </div>
@@ -9872,11 +10057,11 @@ One of the factors include:</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [31]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [32]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
-    <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"DistanceFromHome"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">],</span>
+    <span class="n">df</span><span class="p">,</span>
     <span class="n">x</span><span class="o">=</span><span class="s2">"JobLevel"</span><span class="p">,</span>
     <span class="n">color</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
     <span class="n">title</span><span class="o">=</span><span class="s2">"Attrition Rate by Job Level for Nearby Employees"</span><span class="p">,</span>
@@ -9897,7 +10082,60 @@ One of the factors include:</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_31.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_32.html" width="100%"></iframe>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [33]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">job_attrition</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">'JobLevel'</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="s1">'Attrition'</span><span class="p">],</span> <span class="n">normalize</span><span class="o">=</span><span class="s1">'index'</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+<span class="n">job_attrition</span> <span class="o">=</span> <span class="n">job_attrition</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">job_attrition</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">melt</span><span class="p">(</span><span class="n">job_attrition</span><span class="p">,</span> <span class="n">id_vars</span><span class="o">=</span><span class="p">[</span><span class="s1">'JobLevel'</span><span class="p">],</span> <span class="n">var_name</span><span class="o">=</span><span class="s1">'Attrition'</span><span class="p">,</span> <span class="n">value_name</span><span class="o">=</span><span class="s1">'Percentage'</span><span class="p">)</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+    <span class="n">job_attrition</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="s2">"JobLevel"</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s2">"Percentage"</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">"Attrition"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Attrition Rate by Job Level for Nearby Employees"</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s2">"JobLevel"</span><span class="p">:</span> <span class="s2">"Job Level"</span><span class="p">,</span> <span class="s2">"Percentage"</span><span class="p">:</span> <span class="s2">"Percentage (%)"</span><span class="p">},</span>
+    <span class="n">barmode</span><span class="o">=</span><span class="s2">"group"</span><span class="p">,</span>
+    <span class="n">text</span><span class="o">=</span><span class="s2">"Percentage"</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+    <span class="n">texttemplate</span><span class="o">=</span><span class="s1">'%</span><span class="si">{text:.1f}</span><span class="s1">%'</span><span class="p">,</span>
+    <span class="n">textposition</span><span class="o">=</span><span class="s1">'outside'</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">yaxis_title</span><span class="o">=</span><span class="s2">"Percentage (%)"</span><span class="p">,</span>
+    <span class="n">yaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">]),</span> 
+    <span class="n">legend_title</span><span class="o">=</span><span class="s2">"Attrition Status"</span><span class="p">,</span>
+    <span class="n">bargap</span><span class="o">=</span><span class="mf">0.2</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_33.html" width="100%"></iframe>
 </div>
 </div>
 </div>
@@ -9945,7 +10183,7 @@ One of the factors include:</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [32]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [34]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">dtypes</span>
@@ -9959,7 +10197,7 @@ One of the factors include:</p>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[32]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[34]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>Age                          int64
 Attrition                   object
@@ -10008,7 +10246,7 @@ dtype: object</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [33]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [35]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">Department</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
@@ -10022,7 +10260,7 @@ dtype: object</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[33]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[35]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>Department
 Research &amp; Development    961
@@ -10049,7 +10287,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [34]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [36]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s1">'DepartmentValue'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'Department'</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">({</span><span class="s1">'Sales'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'Research &amp; Development'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">'Human Resources'</span><span class="p">:</span> <span class="mi">3</span><span class="p">})</span>
@@ -10063,7 +10301,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [35]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [37]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s1">'GenderValue'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">Gender</span><span class="o">.</span><span class="n">map</span><span class="p">({</span><span class="s1">'Male'</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">'Female'</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
@@ -10077,7 +10315,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [36]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [38]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s2">"object"</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span>
@@ -10091,7 +10329,7 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[36]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[38]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>Index(['Attrition', 'BusinessTravel', 'Department', 'EducationField', 'Gender',
        'JobRole', 'MaritalStatus', 'Over18', 'OverTime', 'EducationLevel',
@@ -10106,7 +10344,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [37]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [39]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">MaritalStatus</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
@@ -10120,7 +10358,7 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[37]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[39]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>MaritalStatus
 Married     673
@@ -10136,7 +10374,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [38]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [40]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="p">[</span><span class="s2">"object"</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span>
@@ -10150,7 +10388,7 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[38]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[40]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>Index(['Age', 'DailyRate', 'DistanceFromHome', 'Education', 'EmployeeCount',
        'EmployeeNumber', 'EnvironmentSatisfaction', 'HourlyRate',
@@ -10171,7 +10409,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [39]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [41]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">BusinessTravel</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
@@ -10185,7 +10423,7 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[39]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[41]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>BusinessTravel
 Travel_Rarely        1043
@@ -10201,7 +10439,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [40]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [42]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s1">'BusinessTravelValue'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">BusinessTravel</span><span class="o">.</span><span class="n">map</span><span class="p">({</span><span class="s1">'Non-Travel'</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'Travel_Rarely'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'Travel_Frequently'</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
@@ -10215,7 +10453,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [41]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [43]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s1">'AttritionValue'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'Attrition'</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">({</span><span class="s1">'Yes'</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">'No'</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
@@ -10229,7 +10467,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [42]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [44]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="s1">'OverTimeValue'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'OverTime'</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">({</span><span class="s1">'Yes'</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">'No'</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
@@ -10243,7 +10481,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [43]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [45]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">EducationLevel</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
@@ -10257,7 +10495,7 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[43]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[45]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>EducationLevel
 Bachelor    572
@@ -10275,7 +10513,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [44]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [46]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">StandardHours</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
@@ -10289,7 +10527,7 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[44]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[46]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>StandardHours
 80    1470
@@ -10314,7 +10552,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [45]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [47]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">correlation</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
@@ -10347,7 +10585,7 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[45]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[47]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -11063,7 +11301,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [46]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [48]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
@@ -11084,7 +11322,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_46.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_48.html" width="100%"></iframe>
 </div>
 </div>
 </div>
@@ -11122,7 +11360,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [47]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [49]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">correlation</span><span class="p">[</span><span class="s1">'AttritionValue'</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">'AttritionValue'</span><span class="p">)</span>
@@ -11136,7 +11374,7 @@ Name: count, dtype: int64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[47]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[49]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>OverTimeValue               0.246118
 BusinessTravelValue         0.127006
@@ -11174,7 +11412,7 @@ Name: AttritionValue, dtype: float64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [48]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [50]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">features</span> <span class="o">=</span> <span class="n">correlation</span><span class="p">[</span><span class="s1">'AttritionValue'</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">'AttritionValue'</span><span class="p">)</span>
@@ -11209,7 +11447,7 @@ Name: AttritionValue, dtype: float64</pre>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_48.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_50.html" width="100%"></iframe>
 </div>
 </div>
 </div>
@@ -11241,7 +11479,7 @@ Name: AttritionValue, dtype: float64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [49]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [51]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">LabelEncoder</span><span class="p">,</span> <span class="n">StandardScaler</span><span class="p">,</span> <span class="n">OneHotEncoder</span>
@@ -11278,7 +11516,7 @@ Name: AttritionValue, dtype: float64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [50]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [52]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">training_features</span> <span class="o">=</span> <span class="p">[</span>
@@ -11323,7 +11561,7 @@ Name: AttritionValue, dtype: float64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[50]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[52]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>'X.shape: (1470, 26), y.shape: (1470,)'</pre>
 </div>
@@ -11346,7 +11584,7 @@ Name: AttritionValue, dtype: float64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [51]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [53]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
@@ -11361,7 +11599,7 @@ Name: AttritionValue, dtype: float64</pre>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[51]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[53]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>'X_train.shape: (1176, 26), X_test.shape: (294, 26), y_train.shape: (1176,), y_test.shape: (294,)'</pre>
 </div>
@@ -11386,7 +11624,7 @@ SMOTE generates synthetic samples for the minority class (Attrition = Yes), help
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [52]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [54]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">smote</span> <span class="o">=</span> <span class="n">SMOTE</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">69</span><span class="p">)</span>
@@ -11402,7 +11640,7 @@ SMOTE generates synthetic samples for the minority class (Attrition = Yes), help
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[52]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[54]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>'X_train_balanced.shape: (1974, 26), y_train_balanced.shape: (1974,)'</pre>
 </div>
@@ -11414,7 +11652,7 @@ SMOTE generates synthetic samples for the minority class (Attrition = Yes), help
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [53]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [55]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"After SMOTE:"</span><span class="p">)</span>
@@ -11462,7 +11700,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [54]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [56]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># calculate class weights</span>
@@ -11503,7 +11741,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [55]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [57]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">models</span> <span class="o">=</span> <span class="p">{</span>
@@ -11536,7 +11774,7 @@ Name: count, dtype: int64</pre>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [56]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [58]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
@@ -11668,7 +11906,7 @@ weighted avg       0.80      0.57      0.63       294
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [57]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [59]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">model</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -11740,28 +11978,21 @@ F1 Score: 0.35233160621761656
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [58]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [60]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">()</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">results_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="s2">"Model"</span><span class="p">)</span>
 
-<span class="k">for</span> <span class="n">model</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
-        <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-            <span class="n">x</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
-            <span class="n">y</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">"Model Comparison"</span><span class="p">,</span>
-    <span class="n">xaxis_title</span><span class="o">=</span><span class="s2">"Metrics"</span><span class="p">,</span>
-    <span class="n">yaxis_title</span><span class="o">=</span><span class="s2">"Score"</span><span class="p">,</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
+    <span class="n">results_df</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="s2">"Model"</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="s2">"Recall"</span><span class="p">,</span> <span class="s2">"Precision"</span><span class="p">,</span> <span class="s2">"F1 Score"</span><span class="p">],</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Recall Score by Model"</span><span class="p">,</span>
     <span class="n">barmode</span><span class="o">=</span><span class="s2">"group"</span><span class="p">,</span>
+    <span class="n">text_auto</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">renderer</span><span class="o">=</span><span class="s2">"vscode"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -11773,9 +12004,6 @@ F1 Score: 0.35233160621761656
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_58.html" width="100%"></iframe>
-</div>
 </div>
 </div>
 </div>
@@ -11822,7 +12050,7 @@ F1 Score: 0.35233160621761656
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [59]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [61]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">for</span> <span class="n">model</span><span class="p">,</span> <span class="n">cm</span> <span class="ow">in</span> <span class="n">confusion_matrix_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -11886,7 +12114,7 @@ Confusion Matrix for Naive Bayes:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [60]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [62]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">subplot_titles</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">confusion_matrix_results</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
@@ -11917,7 +12145,7 @@ Confusion Matrix for Naive Bayes:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="820" scrolling="no" src="iframe_figures/figure_60.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="820" scrolling="no" src="iframe_figures/figure_62.html" width="100%"></iframe>
 </div>
 </div>
 </div>
@@ -11976,7 +12204,7 @@ Confusion Matrix for Naive Bayes:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [61]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [63]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">rf_model</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
@@ -12045,7 +12273,7 @@ weighted avg       0.86      0.87      0.86       294
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [62]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [64]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">evaluation_results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
@@ -12078,7 +12306,7 @@ weighted avg       0.86      0.87      0.86       294
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_62.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_64.html" width="100%"></iframe>
 </div>
 </div>
 </div>
@@ -12088,7 +12316,7 @@ weighted avg       0.86      0.87      0.86       294
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [63]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [65]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">improvement</span> <span class="o">=</span> <span class="n">evaluation_results</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -12097,10 +12325,19 @@ weighted avg       0.86      0.87      0.86       294
     <span class="n">improvement</span><span class="p">,</span>
     <span class="n">x</span><span class="o">=</span><span class="n">improvement</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
     <span class="n">y</span><span class="o">=</span><span class="n">improvement</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">"Model Improvement"</span><span class="p">,</span>
-    <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s2">"y"</span><span class="p">:</span> <span class="s2">"Score Improvement"</span><span class="p">,</span> <span class="s2">"index"</span><span class="p">:</span> <span class="s2">"Metric"</span><span class="p">},</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Improvement in Model Performance"</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s2">"y"</span><span class="p">:</span> <span class="s2">"Improvement"</span><span class="p">,</span> <span class="s2">"index"</span><span class="p">:</span> <span class="s2">"Metric"</span><span class="p">},</span>
     <span class="n">color</span><span class="o">=</span><span class="n">improvement</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">improvement</span><span class="p">)):</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">improvement</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">improvement</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+        <span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">improvement</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">yshift</span><span class="o">=</span><span class="mi">10</span> <span class="k">if</span> <span class="n">improvement</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -12115,7 +12352,7 @@ weighted avg       0.86      0.87      0.86       294
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_63.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_65.html" width="100%"></iframe>
 </div>
 </div>
 </div>
@@ -12177,7 +12414,7 @@ weighted avg       0.86      0.87      0.86       294
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [64]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [66]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="sa">f</span><span class="s2">"Best paramaters: </span><span class="si">{</span><span class="n">rf_model_tuned</span><span class="o">.</span><span class="n">best_params_</span><span class="si">}</span><span class="s2">"</span>
@@ -12191,7 +12428,7 @@ weighted avg       0.86      0.87      0.86       294
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[64]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[66]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>"Best paramaters: {'max_depth': 20, 'n_estimators': 200}"</pre>
 </div>
@@ -12203,7 +12440,7 @@ weighted avg       0.86      0.87      0.86       294
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [65]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [67]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">feature_names</span> <span class="o">=</span> <span class="p">[]</span>
@@ -12234,7 +12471,7 @@ weighted avg       0.86      0.87      0.86       294
     <span class="n">hover_data</span><span class="o">=</span><span class="p">[</span><span class="s2">"Feature"</span><span class="p">,</span> <span class="s2">"Importance"</span><span class="p">],</span>
 <span class="p">)</span>
 
-<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">1200</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -12247,7 +12484,7 @@ weighted avg       0.86      0.87      0.86       294
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_65.html" width="100%"></iframe>
+<iframe allowfullscreen="" frameborder="0" height="545px" scrolling="no" src="iframe_figures/figure_67.html" width="100%"></iframe>
 </div>
 </div>
 </div>
