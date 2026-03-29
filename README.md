@@ -1,6 +1,6 @@
 # Employee Attrition Prediction ML Project
 
-[CHECK IT OUT HERE! 🚀](https://eshagarwal.github.io/Employee_Attrition_ML_Project/)
+[CHECK IT OUT HERE! 🚀](https://eshagarwal.github.io/Employee-Attrition-Prediction-ML-Project/)
 
 ## 📌 Overview
 This project implements machine learning models to predict employee attrition using the IBM HR Analytics Employee Attrition dataset from Kaggle. The goal is to identify key factors that influence employee turnover and build predictive models to help HR professionals make data-driven decisions.
